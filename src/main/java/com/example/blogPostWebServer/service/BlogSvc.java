@@ -1,6 +1,13 @@
 package com.example.blogPostWebServer.service;
 
+import com.example.blogPostWebServer.exception.NotFoundException;
 import com.example.blogPostWebServer.model.Blog;
+import com.example.blogPostWebServer.model.User;
+import com.example.blogPostWebServer.repository.BlogRepo;
+import com.example.blogPostWebServer.requestModel.BlogRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -9,35 +16,46 @@ import java.util.Optional;
 
 @Service
 public class BlogSvc {
-    List<Blog> blogList = new ArrayList<Blog>();
 
-    public List<Blog> getAllBlogs() {
-        return blogList;
+    @Autowired
+    private BlogRepo blogRepo;
+    @Autowired
+    private UserSvc userSvc;
+
+    public Page<Blog> getAllBlogs(Pageable pageable) {
+        return blogRepo.findAll(pageable);
     }
 
-    public Blog getBlogById(int id) throws Exception {
-        Optional<Blog> blog = blogList.stream().filter(blog1 -> blog1.getId() == id).findAny();
-        if (blog.isPresent()) {
-            return blog.get();
-        } else {
-            throw new Exception("Blog not found");
-        }
+    public Blog getBlogById (int id ) throws NotFoundException {
+        return blogRepo.findById(id).orElseThrow(()-> new NotFoundException("No blog found for id: " + id));
     }
 
-    public void saveBlog (Blog blog) {blogList.add(blog);}
+    public Blog saveBlog (BlogRequest blogRequest) throws NotFoundException {
+        Blog blog = new Blog();
+        User user = userSvc.getuserById(blogRequest.getIdUser());
 
-    public Blog putChangedBlog(int id, Blog blog) throws Exception {
-        Blog myBlog = getBlogById(id);
-        myBlog.setTitle(blog.getTitle());
-        myBlog.setCategory(blog.getCategory());
-        myBlog.setContent(blog.getContent());
-        myBlog.setMinutes(blog.getMinutes());
-        return myBlog;
+        blog.setTitle(blogRequest.getTitle());
+        blog.setCategory(blogRequest.getCategory());
+        blog.setContent(blogRequest.getContent());
+        blog.setMinutes(blogRequest.getMinutes());
+        blog.setUser(user);
+        return blogRepo.save(blog);
     }
 
-    public void deleteBlog(int id) throws Exception {
-        Blog myBlog = getBlogById(id);
-        blogList.remove(myBlog);
+    public Blog UpDateBlog (int id, BlogRequest blogRequest) throws NotFoundException {
+        Blog blog = getBlogById(id);
+        User user = userSvc.getuserById(blogRequest.getIdUser());
+
+        blog.setTitle(blogRequest.getTitle());
+        blog.setCategory(blogRequest.getCategory());
+        blog.setContent(blogRequest.getContent());
+        blog.setMinutes(blogRequest.getMinutes());
+        blog.setUser(user);
+        return blogRepo.save(blog);
     }
 
+    public void deleteBlog (int id) throws NotFoundException {
+        Blog blog = getBlogById(id);
+        blogRepo.delete(blog);
+    }
 }
