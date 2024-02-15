@@ -29,8 +29,7 @@ public class UserSvc {
         user.setSurname(userRequest.getSurname());
         user.setEmail(userRequest.getEmail());
         user.setDataNascita(userRequest.getDataNascita());
-        user.setAvatar(userRequest.getAvatar());
-
+        user.setAvatar(user.createAvatar(userRequest.getName(),userRequest.getSurname()));
         return userRepo.save(user);
     }
 

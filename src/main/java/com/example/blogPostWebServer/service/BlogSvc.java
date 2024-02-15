@@ -58,4 +58,10 @@ public class BlogSvc {
         Blog blog = getBlogById(id);
         blogRepo.delete(blog);
     }
+
+    public Blog upLoadCoverBlog (int id,String url) throws NotFoundException {
+        Blog blog = getBlogById(id);
+        blog.setCover(url);
+        return blogRepo.save(blog);
+    }
 }

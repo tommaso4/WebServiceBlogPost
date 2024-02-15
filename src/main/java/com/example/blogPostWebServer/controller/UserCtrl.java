@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,58 +27,42 @@ public class UserCtrl {
 
     @GetMapping("/user")
     public ResponseEntity<CustomResponse> getAllUsers(Pageable pageable) {
-        try {
-            Page<User> users = userSvc.getAllUsers(pageable);
-            return CustomResponse.success(HttpStatus.OK.toString(), users, HttpStatus.OK);
-        } catch (Exception e) {
-            return CustomResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+        Page<User> users = userSvc.getAllUsers(pageable);
+        return CustomResponse.success(HttpStatus.OK.toString(), users, HttpStatus.OK);
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<CustomResponse> getUserById(@PathVariable int id){
-        try {
+    public ResponseEntity<CustomResponse> getUserById(@PathVariable int id) throws NotFoundException {
             User user = userSvc.getuserById(id);
             return CustomResponse.success(HttpStatus.OK.toString(),user,HttpStatus.OK);
-        }catch (NotFoundException e) {
-            return CustomResponse.failure(e.getMessage(),HttpStatus.NOT_FOUND);
-        }catch (Exception e) {
-            return CustomResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     @PostMapping("/user")
-    public ResponseEntity<CustomResponse> postUser(@RequestBody UserRequest user) {
-        try {
-            User user1 =userSvc.saveUser(user);
-            return CustomResponse.success(HttpStatus.OK.toString(),user,HttpStatus.OK);
-        } catch (Exception e) {
-            return CustomResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<CustomResponse> postUser(@RequestBody @Validated UserRequest user, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return CustomResponse.failure(bindingResult.getAllErrors().stream().map(obj-> obj.getDefaultMessage()).toList().toString(),
+                    HttpStatus.BAD_REQUEST);
         }
+            User user1 =userSvc.saveUser(user);
+            return CustomResponse.success(HttpStatus.OK.toString(),user1,HttpStatus.OK);
+
     }
 
     @PutMapping("/user/{id}")
-    public ResponseEntity<CustomResponse> putUser(@PathVariable int id, @RequestBody UserRequest user)  {
-        try {
+    public ResponseEntity<CustomResponse> putUser(@PathVariable int id, @RequestBody @Validated UserRequest user, BindingResult bindingResult) throws NotFoundException {
+        if (bindingResult.hasErrors()){
+            return CustomResponse.failure(bindingResult.getAllErrors().stream().map(obj-> obj.getDefaultMessage()).toList().toString(),
+                    HttpStatus.BAD_REQUEST);
+        }
             User user1 = userSvc.updateUser(id, user);
             return CustomResponse.success(HttpStatus.OK.toString(),user1, HttpStatus.OK);
-        } catch (NotFoundException e) {
-            return CustomResponse.failure(e.getMessage(),HttpStatus.NOT_FOUND);
-        }catch (Exception e) {
-            return CustomResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     @DeleteMapping("/user/{id}")
-    public ResponseEntity<CustomResponse> deleteUser(@PathVariable int id){
-        try {
-            userSvc.deleteUser(id);
-            return CustomResponse.emptyResponse("User id"+id + "deleted successfully", HttpStatus.OK);
-        }catch (NotFoundException e){
-            return CustomResponse.failure(e.getMessage(), HttpStatus.NOT_FOUND);
-        }catch (Exception e){
-            return CustomResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<CustomResponse> deleteUser(@PathVariable int id) throws NotFoundException {
+
+        userSvc.deleteUser(id);
+        return CustomResponse.emptyResponse("User id"+id + "deleted successfully", HttpStatus.OK);
+
     }
 }

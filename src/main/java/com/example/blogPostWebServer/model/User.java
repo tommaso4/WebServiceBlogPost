@@ -19,15 +19,12 @@ public class User {
     private LocalDate dataNascita;
     private String avatar;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "user",fetch = FetchType.EAGER,cascade = CascadeType.ALL)
     private List<Blog> blogList;
 
-    public User(){
-        this.avatar = createAvatar();
-    }
 
-    public String createAvatar(){
+    public String createAvatar(String name, String surname){
+
         return "https://ui-avatars.com/api/?name="+name+"+"+surname;
     }
 
